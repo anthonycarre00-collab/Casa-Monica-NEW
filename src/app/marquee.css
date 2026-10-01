@@ -1,0 +1,24 @@
+/* Marquee scrolling gallery — pure CSS animation
+   Separate file to avoid globals.css corruption.
+   Works on ALL browsers including old iOS/Android.
+*/
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: marquee-scroll 60s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Mobile: slower scroll */
+@media (max-width: 640px) {
+  .marquee-track {
+    animation-duration: 90s;
+  }
+}

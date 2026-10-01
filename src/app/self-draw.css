@@ -1,0 +1,78 @@
+/* Self-drawing SVG animation — pure CSS, no JavaScript
+   Works on ALL browsers: iOS 9+, Android 4.4+, Chrome, Firefox, Safari.
+   
+   HOW IT WORKS:
+   - Base state: paths are VISIBLE (stroke-dashoffset: 0)
+   - When .self-drawing class is added (by IntersectionObserver):
+     paths animate from stroke-dashoffset:1000 → 0 (draw themselves in)
+   - If IntersectionObserver never fires: paths stay visible (no animation)
+   
+   The .self-drawing class is added by SelfDrawScript.tsx which uses
+   vanilla IntersectionObserver — works on ALL mobile browsers.
+*/
+
+@keyframes self-draw {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes self-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* BASE STATE: paths are VISIBLE by default */
+.living-ink-filter path,
+.living-ink-filter line,
+.living-ink-filter rect {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 0;
+}
+
+/* ANIMATION STATE: only when .self-drawing is present */
+.living-ink-filter.self-drawing path,
+.living-ink-filter.self-drawing line,
+.living-ink-filter.self-drawing rect {
+  stroke-dashoffset: 1000;
+  animation: self-draw 2.5s ease-out forwards;
+}
+
+/* Stagger: each path draws slightly later */
+.living-ink-filter.self-drawing path:nth-of-type(1) { animation-delay: 0s; }
+.living-ink-filter.self-drawing path:nth-of-type(2) { animation-delay: 0.2s; }
+.living-ink-filter.self-drawing path:nth-of-type(3) { animation-delay: 0.4s; }
+.living-ink-filter.self-drawing path:nth-of-type(4) { animation-delay: 0.6s; }
+.living-ink-filter.self-drawing path:nth-of-type(5) { animation-delay: 0.8s; }
+.living-ink-filter.self-drawing path:nth-of-type(6) { animation-delay: 1s; }
+.living-ink-filter.self-drawing path:nth-of-type(7) { animation-delay: 1.2s; }
+.living-ink-filter.self-drawing path:nth-of-type(8) { animation-delay: 1.4s; }
+.living-ink-filter.self-drawing rect:nth-of-type(1) { animation-delay: 0.1s; }
+.living-ink-filter.self-drawing rect:nth-of-type(2) { animation-delay: 0.3s; }
+.living-ink-filter.self-drawing rect:nth-of-type(3) { animation-delay: 0.5s; }
+
+/* Circles and text fade in after paths are drawn */
+.living-ink-filter.self-drawing circle {
+  opacity: 0;
+  animation: self-fade 1s ease-out forwards;
+  animation-delay: 1.8s;
+}
+.living-ink-filter.self-drawing text {
+  opacity: 0;
+  animation: self-fade 1s ease-out forwards;
+  animation-delay: 2.2s;
+}
+
+/* Reduced motion: instant, no animation */
+@media (prefers-reduced-motion: reduce) {
+  .living-ink-filter.self-drawing path,
+  .living-ink-filter.self-drawing line,
+  .living-ink-filter.self-drawing rect {
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
+  }
+  .living-ink-filter.self-drawing circle,
+  .living-ink-filter.self-drawing text {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}

@@ -1,0 +1,24 @@
+"use client";
+import { useState, useEffect } from "react";
+type WeatherData = { temperature: number; apparent: number; humidity: number; weatherCode: number; isDay: boolean; windSpeed: number; localtime: string };
+const WMO: Record<number, { label: string; icon: string }> = { 0: { label: "Despejado", icon: "☀️" }, 1: { label: "Mayormente despejado", icon: "🌤️" }, 2: { label: "Parcialmente nublado", icon: "⛅" }, 3: { label: "Nublado", icon: "☁️" }, 45: { label: "Niebla", icon: "🌫️" }, 51: { label: "Llovizna", icon: "🌦️" }, 53: { label: "Llovizna", icon: "🌦️" }, 61: { label: "Lluvia", icon: "🌧️" }, 63: { label: "Lluvia", icon: "🌧️" }, 80: { label: "Chubascos", icon: "🌦️" }, 95: { label: "Tormenta", icon: "⛈️" } };
+function getMood(temp: number, code: number) { if (code >= 51 && code < 80) return { icon: "🌧️", title: "Para la hamaca", desc: "Lluvia caribeña — mejor quedarse adentro con un café." }; if (temp >= 33) return { icon: "🥵", title: "Para la siesta", desc: "Calor de verdad. Sombra, agua fresca, y moverse despacio." }; if (temp >= 28) return { icon: "☀️", title: "Para el río", desc: "Tarde perfecta para un chapuzón en el Magdalena." }; return { icon: "🌅", title: "Para caminar", desc: "El clima más rico de Mompox — sal a caminar la Albarrada." }; }
+export function Weather() {
+  const [data, setData] = useState<WeatherData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [clock, setClock] = useState("");
+  useEffect(() => {
+    async function fetchWeather() { setLoading(true); try { const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=9.2414&longitude=-74.4258&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&timezone=America%2FBogota"); const j = await res.json(); setData({ temperature: Math.round(j.current.temperature_2m), apparent: Math.round(j.current.apparent_temperature), humidity: j.current.relative_humidity_2m, weatherCode: j.current.weather_code, isDay: j.current.is_day === 1, windSpeed: Math.round(j.current.wind_speed_10m), localtime: j.current.time }); } catch {} finally { setLoading(false); } }
+    fetchWeather();
+    const w = setInterval(fetchWeather, 600000);
+    const updateClock = () => { try { const now = new Date(); const fmt = new Intl.DateTimeFormat("es-CO", { timeZone: "America/Bogota", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }); setClock(fmt.format(now)); } catch {} };
+    updateClock();
+    const c = setInterval(updateClock, 1000);
+    return () => { clearInterval(w); clearInterval(c); };
+  }, []);
+  if (loading && !data) return <div className="flex items-center gap-3 p-4"><div className="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" /><span className="text-sm text-[var(--fg)]/70">Cargando clima…</span></div>;
+  if (!data) return null;
+  const wmo = WMO[data.weatherCode] || { label: "Clima raro", icon: "🌈" };
+  const mood = getMood(data.temperature, data.weatherCode);
+  return (<div className="bg-[#FFFBF0]/95 backdrop-blur-md rounded-2xl p-5 shadow-lg border border-[var(--fg)]/15"><div className="flex items-center justify-between mb-3"><div><div className="eyebrow text-[var(--fg)]/60">Clima en</div><div className="font-script text-2xl text-[var(--accent)]">Mompox</div></div><div className="text-right"><div className="font-serif text-2xl text-[var(--fg)] tabular-nums">{clock}</div><div className="text-[10px] text-[var(--fg)]/60">{data.isDay ? "día" : "noche"}</div></div></div><div className="flex items-center gap-4"><div className="text-4xl">{wmo.icon}</div><div className="flex-1"><div className="flex items-baseline gap-2"><span className="font-serif text-3xl text-[var(--fg)]">{data.temperature}°</span><span className="text-xs text-[var(--fg)]/60">C</span></div><div className="text-xs text-[var(--fg)]/70">{wmo.label}</div></div></div><div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-[var(--fg)]/15 text-center"><div><div className="text-[9px] uppercase tracking-wider text-[var(--fg)]/60">Sensación</div><div className="font-serif text-sm text-[var(--fg)]">{data.apparent}°</div></div><div><div className="text-[9px] uppercase tracking-wider text-[var(--fg)]/60">Humedad</div><div className="font-serif text-sm text-[var(--fg)]">{data.humidity}%</div></div><div><div className="text-[9px] uppercase tracking-wider text-[var(--fg)]/60">Viento</div><div className="font-serif text-sm text-[var(--fg)]">{data.windSpeed}</div></div></div><div className="mt-3 pt-3 border-t border-[var(--fg)]/15 flex items-start gap-2"><span className="text-lg leading-none">{mood.icon}</span><div><div className="font-script text-lg text-[var(--accent)] leading-tight">{mood.title}</div><div className="text-[11px] text-[var(--fg)]/70 leading-tight">{mood.desc}</div></div></div></div>);
+}
